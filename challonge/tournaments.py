@@ -3,12 +3,12 @@ class Tournaments():
         self._account = account
 
 
-    def index(self, **params):
+    async def index(self, **params):
         """Retrieve a set of tournaments created with your account."""
-        return self._account.fetch_and_parse("GET", "tournaments", **params)
+        return await self._account.fetch_and_parse("GET", "tournaments", **params)
 
 
-    def create(self, name, url, tournament_type="single elimination", **params):
+    async def create(self, name, url, tournament_type="single elimination", **params):
         """Create a new tournament."""
         params.update({
             "name": name,
@@ -16,29 +16,29 @@ class Tournaments():
             "tournament_type": tournament_type,
         })
 
-        return self._account.fetch_and_parse("POST", "tournaments", "tournament", **params)
+        return await self._account.fetch_and_parse("POST", "tournaments", "tournament", **params)
 
 
-    def show(self, tournament):
+    async def show(self, tournament):
         """Retrieve a single tournament record created with your account."""
-        return self._account.fetch_and_parse("GET", "tournaments/%s" % tournament)
+        return await self._account.fetch_and_parse("GET", "tournaments/%s" % tournament)
 
 
-    def update(self, tournament, **params):
+    async def update(self, tournament, **params):
         """Update a tournament's attributes."""
-        self._account.fetch("PUT", "tournaments/%s" % tournament, "tournament", **params)
+        await self._account.fetch("PUT", "tournaments/%s" % tournament, "tournament", **params)
 
 
-    def destroy(self, tournament):
+    async def destroy(self, tournament):
         """Deletes a tournament along with all its associated records.
 
         There is no undo, so use with care!
 
         """
-        self._account.fetch("DELETE", "tournaments/%s" % tournament)
+        await self._account.fetch("DELETE", "tournaments/%s" % tournament)
 
 
-    def process_check_ins(self, tournament):
+    async def process_check_ins(self, tournament):
         """This should be invoked after a tournament's
         check-in window closes before the tournament is started.
 
@@ -47,10 +47,10 @@ class Tournaments():
         3) Transitions the tournament state from 'checking_in' to 'checked_in'
 
         """
-        self._account.fetch("POST", "tournaments/%s/process_check_ins")
+        await self._account.fetch("POST", "tournaments/%s/process_check_ins")
 
 
-    def abort_check_in(self, tournament):
+    async def abort_check_in(self, tournament):
         """When your tournament is in a 'checking_in' or 'checked_in' state,
         there's no way to edit the tournament's start time (start_at)
         or check-in duration (check_in_duration).
@@ -60,31 +60,31 @@ class Tournaments():
         2) Transitions the tournament state from 'checking_in' or 'checked_in' to 'pending'
 
         """
-        self._account.fetch("POST", "tournaments/%s/abort_check_in")
+        await self._account.fetch("POST", "tournaments/%s/abort_check_in")
 
 
-    def start(self, tournament):
+    async def start(self, tournament):
         """Start a tournament, opening up matches for score reporting.
 
         The tournament must have at least 2 participants.
 
         """
-        self._account.fetch("POST", "tournaments/%s/start" % tournament)
+        await self._account.fetch("POST", "tournaments/%s/start" % tournament)
 
 
-    def finalize(self, tournament):
+    async def finalize(self, tournament):
         """Finalize a tournament that has had all match scores submitted,
         rendering its results permanent.
 
         """
-        self._account.fetch("POST", "tournaments/%s/finalize" % tournament)
+        await self._account.fetch("POST", "tournaments/%s/finalize" % tournament)
 
 
-    def reset(self, tournament):
+    async def reset(self, tournament):
         """Reset a tournament, clearing all of its scores and attachments.
 
         You can then add/remove/edit participants before starting the
         tournament again.
 
         """
-        self._account.fetch("POST", "tournaments/%s/reset" % tournament)
+        await self._account.fetch("POST", "tournaments/%s/reset" % tournament)

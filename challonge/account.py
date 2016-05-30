@@ -1,8 +1,12 @@
 import decimal
 import iso8601
 import itertools
+import aiohttp
+import asyncio
+
 from requests import request
 from requests.exceptions import HTTPError
+
 from challonge.tournaments import Tournaments
 from challonge.participants import Participants
 from challonge.matches import Matches
@@ -24,13 +28,17 @@ class ChallongeException(Exception):
 
 
 class Account():
-    def __init__(self, username, api_key):
+    def __init__(self, username, api_key, loop=None):
         self._user = username
         self._api_key = api_key
         self._tournaments = Tournaments(self)
         self._participants = Participants(self)
         self._matches = Matches(self)
+        self._loop = asyncio.get_event_loop() if loop is None else loop
+        self._session = aiohttp.ClientSession(loop=self._loop)
 
+    def __del__(self):
+        self._session.close()
 
     @property
     def tournaments(self):
@@ -47,38 +55,28 @@ class Account():
         return self._matches
 
 
-    def fetch(self, method, uri, params_prefix=None, **params):
+    async def fetch(self, method, uri, params_prefix=None, **params):
         """Fetch the given uri and return the contents of the response."""
         params = self._prepare_params(params, params_prefix)
 
         # build the HTTP request and use basic authentication
         url = "https://%s/%s.xml" % (CHALLONGE_API_URL, uri)
 
-        try:
-            response = request(
-                method,
-                url,
-                params=params,
-                auth=(self._user, self._api_key))
-            response.raise_for_status()
-        except HTTPError:
-            if response.status_code != 422:
-                raise
-            # wrap up application-level errors
-            doc = ElementTree.fromstring(response.text)
-            if doc.tag != "errors":
-                raise
-            errors = [e.text for e in doc]
-            raise ChallongeException(*errors)
+        with aiohttp.Timeout(10):
+            async with self._session.request(method, url, params=params, auth=aiohttp.BasicAuth(self._user, self._api_key)) as response:
+                resp = (await response.text()).encode('UTF-8')
+                if response.status == 422:
+                    doc = ElementTree.fromstring(resp)
+                    if doc.tag == "errors":
+                        errors = [e.text for e in doc]
+                        raise ChallongeException(*errors)
 
-        # use of encode() function to remove non-breaking spaces
-        # with non-breaking spaces the XML parser fails in Python2
-        return response.text.encode('UTF-8')
+        return resp
 
 
-    def fetch_and_parse(self, method, uri, params_prefix=None, **params):
+    async def fetch_and_parse(self, method, uri, params_prefix=None, **params):
         """Fetch the given uri and return the root Element of the response."""
-        doc = ElementTree.fromstring(self.fetch(method, uri, params_prefix, **params))
+        doc = ElementTree.fromstring(await self.fetch(method, uri, params_prefix, **params))
         return self._parse(doc)
 
 
