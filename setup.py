@@ -3,8 +3,8 @@ import challonge
 
 
 setup(name = "pychallonge",
-      author = "Russ Amos",
-      url = "http://github.com/russ-/pychallonge",
+      author = "Fabien Poupineau",
+      url = "http://github.com/fp12/pychallonge",
       version = challonge.__version__,
       packages = [
           'challonge',
