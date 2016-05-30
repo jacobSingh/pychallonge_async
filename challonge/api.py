@@ -1,14 +1,9 @@
 import decimal
 import iso8601
-try:
-    # For Python 3.0 and later
-    from urllib.parse import urlencode
-    from urllib.request import Request, HTTPBasicAuthHandler, build_opener
-    from urllib.error import HTTPError
-except ImportError:
-    # Fall back to Python 2's urllib2
-    from urllib import urlencode
-    from urllib2 import Request, HTTPBasicAuthHandler, build_opener, HTTPError
+import itertools
+from requests import request
+from requests.exceptions import HTTPError
+
 try:
     from xml.etree import cElementTree as ElementTree
 except ImportError:
@@ -42,44 +37,37 @@ def get_credentials():
 
 def fetch(method, uri, params_prefix=None, **params):
     """Fetch the given uri and return the contents of the response."""
-    params = urlencode(_prepare_params(params, params_prefix))
-    binary_params = params.encode('ASCII')
+    params = _prepare_params(params, params_prefix)
 
-    # build the HTTP request
+    # build the HTTP request and use basic authentication
     url = "https://%s/%s.xml" % (CHALLONGE_API_URL, uri)
-    req = Request(url, binary_params)
-    req.get_method = lambda: method
-
-    # use basic authentication
-    user, api_key = get_credentials()
-    auth_handler = HTTPBasicAuthHandler()
-    auth_handler.add_password(
-        realm="Application",
-        uri=req.get_full_url(),
-        user=user,
-        passwd=api_key
-    )
-    opener = build_opener(auth_handler)
 
     try:
-        response = opener.open(req)
-    except HTTPError as e:
-        if e.code != 422:
+        response = request(
+            method,
+            url,
+            params=params,
+            auth=get_credentials())
+        response.raise_for_status()
+    except HTTPError:
+        if response.status_code != 422:
             raise
         # wrap up application-level errors
-        doc = ElementTree.parse(e).getroot()
+        doc = ElementTree.fromstring(response.text)
         if doc.tag != "errors":
             raise
         errors = [e.text for e in doc]
         raise ChallongeException(*errors)
 
-    return response
+    # use of encode() function to remove non-breaking spaces
+    # with non-breaking spaces the XML parser fails in Python2
+    return response.text.encode('UTF-8')
 
 
 def fetch_and_parse(method, uri, params_prefix=None, **params):
     """Fetch the given uri and return the root Element of the response."""
-    doc = ElementTree.parse(fetch(method, uri, params_prefix, **params))
-    return _parse(doc.getroot())
+    doc = ElementTree.fromstring(fetch(method, uri, params_prefix, **params))
+    return _parse(doc)
 
 
 def _parse(root):
@@ -120,17 +108,44 @@ def _prepare_params(dirty_params, prefix=None):
     objects.
 
     """
-    params = {}
-    for k, v in dirty_params.items():
-        if hasattr(v, "isoformat"):
-            v = v.isoformat()
-        elif isinstance(v, bool):
-            # challonge.com only accepts lowercase true/false
-            v = str(v).lower()
+    if prefix and prefix.endswith('[]'):
+        keys = []
+        values = []
+        for k, v in dirty_params.items():
+            if isinstance(v, (tuple, list)):
+                keys.append(k)
+                values.append(v)
+        firstiter = ((k, v) for vals in zip(*values) for k, v in zip(keys, vals))
+        lastiter = ((k, v) for k, v in dirty_params.items() if k not in keys)
+        dpiter = itertools.chain(firstiter, lastiter)
+    else:
+        dpiter = dirty_params.items()
 
-        if prefix:
-            params["%s[%s]" % (prefix, k)] = v
+    params = []
+    for k, v in dpiter:
+        if isinstance(v, (tuple, list)):
+            for val in v:
+                val = _prepare_value(val)
+                if prefix:
+                    params.append(("%s[][%s]" % (prefix, k), val))
+                    # params["%s[%s]" % (prefix, k)] = v
+                else:
+                    params.append((k+"[]", val))
+                    # params[k] = v
         else:
-            params[k] = v
+            v = _prepare_value(v)
+            if prefix:
+                params.append(("%s[%s]" % (prefix, k), v))
+            else:
+                params.append((k, v))
 
     return params
+
+
+def _prepare_value(val):
+    if hasattr(val, "isoformat"):
+        val = val.isoformat()
+    elif isinstance(val, bool):
+        # challonge.com only accepts lowercase true/false
+        val = str(val).lower()
+    return val
