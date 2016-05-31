@@ -4,9 +4,6 @@ import itertools
 import aiohttp
 import asyncio
 
-from requests import request
-from requests.exceptions import HTTPError
-
 from challonge.tournaments import Tournaments
 from challonge.participants import Participants
 from challonge.matches import Matches
