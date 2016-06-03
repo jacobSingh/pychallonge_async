@@ -14,6 +14,7 @@ api_key = None
 def _get_random_name():
     return "pychallonge_" + "".join(random.choice(string.ascii_lowercase) for _ in range(0, 15))
 
+
 def async_test(f):
     def wrapper(*args, **kwargs):
         coro = asyncio.coroutine(f)
@@ -21,6 +22,7 @@ def async_test(f):
         loop = asyncio.get_event_loop()
         loop.run_until_complete(future)
     return wrapper
+
 
 class AccountTestCase(unittest.TestCase):
 
@@ -43,7 +45,7 @@ class TournamentsTestCase(unittest.TestCase):
         self._account = Account(username, api_key)
         self.random_name = _get_random_name()
 
-        self.t = yield from  self._account.tournaments.create(self.random_name, self.random_name)
+        self.t = yield from self._account.tournaments.create(self.random_name, self.random_name)
 
     @async_test
     def tearDown(self):
@@ -51,7 +53,7 @@ class TournamentsTestCase(unittest.TestCase):
 
     @async_test
     def test_index(self):
-        ts = yield from  self._account.tournaments.index()
+        ts = yield from self._account.tournaments.index()
         ts = list(filter(lambda x: x["id"] == self.t["id"], ts))
         self.assertEqual(len(ts), 1)
         self.assertEqual(self.t, ts[0])
@@ -166,7 +168,6 @@ class TournamentsTestCase(unittest.TestCase):
             self.assertTrue(True)
         else:
             self.assertTrue(False)
-
 
         yield from self._account.tournaments.reset(self.t["id"])
 
@@ -295,10 +296,9 @@ class MatchesTestCase(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    username = os.environ.get("CHALLONGE_USER") if username == None else username
-    api_key = os.environ.get("CHALLONGE_KEY") if api_key == None else api_key
+    username = os.environ.get("CHALLONGE_USER") if username is None else username
+    api_key = os.environ.get("CHALLONGE_KEY") if api_key is None else api_key
     if not username or not api_key:
-        raise RuntimeError("You must add CHALLONGE_USER and CHALLONGE_KEY \
-            to your environment variables to run the test suite")
+        raise RuntimeError("You must add CHALLONGE_USER and CHALLONGE_KEY to your environment variables to run the test suite")
 
     unittest.main()

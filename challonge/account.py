@@ -14,10 +14,7 @@ except ImportError:
     from xml.etree import ElementTree
 
 
-
-
 CHALLONGE_API_URL = "api.challonge.com/v1"
-
 
 
 class ChallongeException(Exception):
@@ -41,16 +38,13 @@ class Account():
     def tournaments(self):
         return self._tournaments
 
-
     @property
     def participants(self):
         return self._participants
 
-
     @property
     def matches(self):
         return self._matches
-
 
     async def fetch(self, method, uri, params_prefix=None, **params):
         """Fetch the given uri and return the contents of the response."""
@@ -70,12 +64,10 @@ class Account():
 
         return resp
 
-
     async def fetch_and_parse(self, method, uri, params_prefix=None, **params):
         """Fetch the given uri and return the root Element of the response."""
         doc = ElementTree.fromstring(await self.fetch(method, uri, params_prefix, **params))
         return self._parse(doc)
-
 
     def _parse(self, root):
         """Recursively convert an Element into python data types"""
@@ -104,7 +96,6 @@ class Account():
             d[child.tag] = value
         return d
 
-
     def _prepare_params(self, dirty_params, prefix=None):
         """Prepares parameters to be sent to challonge.com.
 
@@ -122,8 +113,10 @@ class Account():
                 if isinstance(v, (tuple, list)):
                     keys.append(k)
                     values.append(v)
-            firstiter = ((k, v) for vals in zip(*values) for k, v in zip(keys, vals))
-            lastiter = ((k, v) for k, v in dirty_params.items() if k not in keys)
+            firstiter = ((k, v) for vals in zip(*values)
+                         for k, v in zip(keys, vals))
+            lastiter = ((k, v)
+                        for k, v in dirty_params.items() if k not in keys)
             dpiter = itertools.chain(firstiter, lastiter)
         else:
             dpiter = dirty_params.items()
@@ -137,7 +130,7 @@ class Account():
                         params.append(("%s[][%s]" % (prefix, k), val))
                         # params["%s[%s]" % (prefix, k)] = v
                     else:
-                        params.append((k+"[]", val))
+                        params.append((k + "[]", val))
                         # params[k] = v
             else:
                 v = self._prepare_value(v)
@@ -147,7 +140,6 @@ class Account():
                     params.append((k, v))
 
         return params
-
 
     def _prepare_value(self, val):
         if hasattr(val, "isoformat"):
