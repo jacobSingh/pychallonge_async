@@ -95,6 +95,8 @@ class Account():
                 value = decimal.Decimal(child.text)
             elif type == "integer":
                 value = int(child.text)
+            elif type == "array":
+                value = [self._parse(greatchild) for greatchild in child]
             else:
                 value = child.text
 

@@ -23,7 +23,6 @@ def async_test(f):
         loop.run_until_complete(future)
     return wrapper
 
-
 class AccountTestCase(unittest.TestCase):
 
     def test_init(self):
@@ -134,10 +133,14 @@ class TournamentsTestCase(unittest.TestCase):
         yield from self._account.participants.create(self.t["id"], "#1")
         yield from self._account.participants.create(self.t["id"], "#2")
 
+        t = yield from self._account.tournaments.show(self.t["id"], include_participants=1, include_matches=1)
+        self.assertNotEqual(t['participants'], [])
+
         yield from self._account.tournaments.start(self.t["id"])
 
         t = yield from self._account.tournaments.show(self.t["id"])
         self.assertNotEqual(t["started-at"], None)
+
 
     @async_test
     def test_finalize(self):
@@ -181,7 +184,6 @@ class TournamentsTestCase(unittest.TestCase):
         p = yield from self._account.participants.create(self.t["id"], "name")
 
         yield from self._account.participants.destroy(self.t["id"], p["id"])
-
 
 class ParticipantsTestCase(unittest.TestCase):
 
@@ -247,7 +249,6 @@ class ParticipantsTestCase(unittest.TestCase):
         # randomize has a 50% chance of actually being different than
         # current seeds, so we're just verifying that the method runs at all
         yield from self._account.participants.randomize(self.t["id"])
-
 
 class MatchesTestCase(unittest.TestCase):
 

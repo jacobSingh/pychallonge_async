@@ -16,9 +16,9 @@ class Tournaments():
 
         return await self._account.fetch_and_parse("POST", "tournaments", "tournament", **params)
 
-    async def show(self, tournament):
+    async def show(self, tournament, **params):
         """Retrieve a single tournament record created with your account."""
-        return await self._account.fetch_and_parse("GET", "tournaments/%s" % tournament)
+        return await self._account.fetch_and_parse("GET", "tournaments/%s" % tournament, **params)
 
     async def update(self, tournament, **params):
         """Update a tournament's attributes."""
