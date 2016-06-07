@@ -63,12 +63,12 @@ class Tournaments():
         """
         await self._account.fetch("POST", "tournaments/%s/start" % tournament)
 
-    async def finalize(self, tournament):
+    async def finalize(self, tournament, **params):
         """Finalize a tournament that has had all match scores submitted,
         rendering its results permanent.
 
         """
-        await self._account.fetch("POST", "tournaments/%s/finalize" % tournament)
+        return await self._account.fetch_and_parse("POST", "tournaments/%s/finalize" % tournament, **params)
 
     async def reset(self, tournament):
         """Reset a tournament, clearing all of its scores and attachments.
