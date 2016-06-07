@@ -27,14 +27,20 @@ def async_test(f):
 class AccountTestCase(unittest.TestCase):
 
     def test_init(self):
-        _account = Account(username, api_key)
-        self.assertEqual(_account._user, username)
-        self.assertEqual(_account._api_key, api_key)
+        account = Account(username, api_key)
+        self.assertEqual(account._user, username)
+        self.assertEqual(account._api_key, api_key)
+
+    @async_test
+    def test_is_valid(self):
+        account = Account(username, api_key)
+        is_valid = yield from account.is_valid
+        self.assertTrue(is_valid)
 
     @async_test
     def test_call(self):
-        _account = Account(username, api_key)
-        t = yield from _account.fetch("GET", "tournaments")
+        account = Account(username, api_key)
+        t = yield from account.fetch("GET", "tournaments")
         self.assertNotEqual(t, '')
 
 
@@ -43,9 +49,9 @@ class TournamentsTestCase(unittest.TestCase):
     @async_test
     def setUp(self):
         self._account = Account(username, api_key)
-        self.random_name = _get_random_name()
+        random_name = _get_random_name()
 
-        self.t = yield from self._account.tournaments.create(self.random_name, self.random_name)
+        self.t = yield from self._account.tournaments.create(random_name, random_name)
 
     @async_test
     def tearDown(self):

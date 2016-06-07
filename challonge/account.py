@@ -46,6 +46,12 @@ class Account():
     def matches(self):
         return self._matches
 
+    @property
+    async def is_valid(self):
+        t = await self.fetch("GET", "tournaments")
+        return t != ''
+    
+
     async def fetch(self, method, uri, params_prefix=None, **params):
         """Fetch the given uri and return the contents of the response."""
         params = self._prepare_params(params, params_prefix)
@@ -56,12 +62,11 @@ class Account():
         with aiohttp.Timeout(10):
             async with self._session.request(method, url, params=params, auth=aiohttp.BasicAuth(self._user, self._api_key)) as response:
                 resp = (await response.text()).encode('UTF-8')
-                if response.status == 422:
+                if response.status >= 400:
                     doc = ElementTree.fromstring(resp)
                     if doc.tag == "errors":
                         errors = [e.text for e in doc]
                         raise ChallongeException(*errors)
-
         return resp
 
     async def fetch_and_parse(self, method, uri, params_prefix=None, **params):
