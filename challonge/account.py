@@ -61,12 +61,9 @@ class Account():
 
         with aiohttp.Timeout(10):
             async with self._session.request(method, url, params=params, auth=aiohttp.BasicAuth(self._user, self._api_key)) as response:
-                resp = (await response.text()).encode('UTF-8')
+                resp = await response.text()
                 if response.status >= 400:
-                    doc = ElementTree.fromstring(resp)
-                    if doc.tag == "errors":
-                        errors = [e.text for e in doc]
-                        raise ChallongeException(*errors)
+                    raise ChallongeException(response.reason)
         return resp
 
     async def fetch_and_parse(self, method, uri, params_prefix=None, **params):
