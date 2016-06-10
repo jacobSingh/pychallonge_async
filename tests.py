@@ -126,7 +126,7 @@ class TournamentsTestCase(unittest.TestCase):
         except ChallongeException:
             self.assertTrue(True)
         else:
-            self.assertTrue(False)
+            self.fail('Could start tournament without participants')
 
         self.assertEqual(self.t["started-at"], None)
 
@@ -136,11 +136,8 @@ class TournamentsTestCase(unittest.TestCase):
         t = yield from self._account.tournaments.show(self.t["id"], include_participants=1, include_matches=1)
         self.assertNotEqual(t['participants'], [])
 
-        yield from self._account.tournaments.start(self.t["id"])
-
-        t = yield from self._account.tournaments.show(self.t["id"])
+        t = yield from self._account.tournaments.start(self.t["id"])
         self.assertNotEqual(t["started-at"], None)
-
 
     @async_test
     def test_finalize(self):

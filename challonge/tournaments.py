@@ -61,7 +61,7 @@ class Tournaments():
         The tournament must have at least 2 participants.
 
         """
-        await self._account.fetch("POST", "tournaments/%s/start" % tournament)
+        return await self._account.fetch_and_parse("POST", "tournaments/%s/start" % tournament)
 
     async def finalize(self, tournament, **params):
         """Finalize a tournament that has had all match scores submitted,
