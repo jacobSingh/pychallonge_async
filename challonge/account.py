@@ -28,7 +28,7 @@ class Account():
         self._tournaments = Tournaments(self)
         self._participants = Participants(self)
         self._matches = Matches(self)
-        self._loop = asyncio.get_event_loop() if loop is None else loop
+        self._loop = loop or asyncio.get_event_loop()
         self._session = aiohttp.ClientSession(loop=self._loop)
 
     def __del__(self):
@@ -50,7 +50,6 @@ class Account():
     async def is_valid(self):
         t = await self.fetch("GET", "tournaments")
         return t != ''
-    
 
     async def fetch(self, method, uri, params_prefix=None, **params):
         """Fetch the given uri and return the contents of the response."""
@@ -64,7 +63,8 @@ class Account():
                 resp = await response.text()
                 if response.status >= 400:
                     raise ChallongeException(response.reason)
-        return resp
+                return resp
+        return None
 
     async def fetch_and_parse(self, method, uri, params_prefix=None, **params):
         """Fetch the given uri and return the root Element of the response."""
@@ -80,19 +80,19 @@ class Account():
 
         d = {}
         for child in root:
-            type = child.get("type") or "string"
+            element_type = child.get("type") or "string"
 
             if child.get("nil"):
                 value = None
-            elif type == "boolean":
+            elif element_type == "boolean":
                 value = True if child.text.lower() == "true" else False
-            elif type == "dateTime":
+            elif element_type == "dateTime":
                 value = iso8601.parse_date(child.text)
-            elif type == "decimal":
+            elif element_type == "decimal":
                 value = decimal.Decimal(child.text)
-            elif type == "integer":
+            elif element_type == "integer":
                 value = int(child.text)
-            elif type == "array":
+            elif element_type == "array":
                 value = [self._parse(greatchild) for greatchild in child]
             else:
                 value = child.text
