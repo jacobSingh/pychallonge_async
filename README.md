@@ -15,7 +15,7 @@ Pychallonge provides python bindings for the
 
 # Installation
 
-    pip install -e git+http://github.com/fp12/pychallonge_async#egg=pychal
+    pip install -e git+http://github.com/fp12/pychallonge_async#egg=pychallonge_async
     
 # Usage
 
