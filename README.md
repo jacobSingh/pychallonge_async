@@ -13,7 +13,10 @@ Pychallonge provides python bindings for the
 
 * `3.5`
 
+# Installation
 
+    pip install -e git+http://github.com/fp12/pychallonge_async#egg=pychal
+    
 # Usage
 
 ```python
