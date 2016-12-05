@@ -20,27 +20,28 @@ Pychallonge provides python bindings for the
 # Usage
 
 ```python
+import asyncio
 from challonge import Account
 
-# Create an Account instance with your [CHALLONGE! API credentials](https://challonge.com/settings/developer).
-account = Account('your_challonge_username', 'your_api_key')
+async def pychallonge_async()
+    # Create an Account instance with your [CHALLONGE! API credentials](https://challonge.com/settings/developer).
+    account = Account('your_challonge_username', 'your_api_key')
 
-# Retrieve a tournament by its id (or its url).
-tournament = account.tournaments.show(3272)
+    # Retrieve a tournament by its id (or its url).
+    tournament = await account.tournaments.show(3272)
 
-# Tournaments, matches, and participants are all represented as normal Python dicts.
-print(tournament['id']) # 3272
-print(tournament['name']) # My Awesome Tournament
-print(tournament['started-at']) # None
+    # Tournaments, matches, and participants are all represented as normal Python dicts.
+    print(tournament['id']) # 3272
+    print(tournament['name']) # My Awesome Tournament
+    print(tournament['started-at']) # None
 
-# Retrieve the participants for a given tournament.
-participants = account.participants.index(tournament['id'])
-print(len(participants)) # 13
+    # Retrieve the participants for a given tournament.
+    participants = await account.participants.index(tournament['id'])
+    print(len(participants)) # 13
 
-# Start the tournament and retrieve the updated information to see the effects of the change.
-account.tournaments.start(tournament['id'])
-tournament = account.tournaments.show(tournament['id'])
-print(tournament['started-at']) # 2011-07-31 16:16:02-04:00
+    # Start the tournament and retrieve the updated information to see the effects of the change.
+    tournament = await account.tournaments.start(tournament['id'])
+    print(tournament['started-at']) # 2011-07-31 16:16:02-04:00
 ```
 
 See [challonge.com](http://api.challonge.com/v1) for full API documentation (XML results).
