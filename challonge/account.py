@@ -15,6 +15,7 @@ except ImportError:
 
 
 CHALLONGE_API_URL = "api.challonge.com/v1"
+DEFAULT_TIMEOUT = 30
 
 
 class ChallongeException(Exception):
@@ -22,7 +23,7 @@ class ChallongeException(Exception):
 
 
 class Account():
-    def __init__(self, username, api_key, loop=None):
+    def __init__(self, username, api_key, loop=None, timeout=DEFAULT_TIMEOUT):
         self._user = username
         self._api_key = api_key
         self._tournaments = Tournaments(self)
@@ -30,6 +31,7 @@ class Account():
         self._matches = Matches(self)
         self._loop = loop or asyncio.get_event_loop()
         self._session = aiohttp.ClientSession(loop=self._loop)
+        self.timeout = timeout
 
     def __del__(self):
         self._session.close()
@@ -58,7 +60,7 @@ class Account():
         # build the HTTP request and use basic authentication
         url = "https://%s/%s.xml" % (CHALLONGE_API_URL, uri)
 
-        with aiohttp.Timeout(10):
+        with aiohttp.Timeout(self.timeout):
             async with self._session.request(method, url, params=params, auth=aiohttp.BasicAuth(self._user, self._api_key)) as response:
                 resp = await response.text()
                 if response.status >= 400:
