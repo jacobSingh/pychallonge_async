@@ -1,2 +1,2 @@
 iso8601==0.1.11
-aiohttp
+aiohttp>=1.0,<1.1
