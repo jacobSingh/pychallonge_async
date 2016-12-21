@@ -15,7 +15,6 @@ except ImportError:
 
 
 CHALLONGE_API_URL = "api.challonge.com/v1"
-DEFAULT_TIMEOUT = 30
 
 
 class ChallongeException(Exception):
@@ -23,7 +22,7 @@ class ChallongeException(Exception):
 
 
 class Account():
-    def __init__(self, username, api_key, loop=None, timeout=DEFAULT_TIMEOUT):
+    def __init__(self, username, api_key, loop=None):
         self._user = username
         self._api_key = api_key
         self._tournaments = Tournaments(self)
@@ -31,7 +30,6 @@ class Account():
         self._matches = Matches(self)
         self._loop = loop or asyncio.get_event_loop()
         self._session = aiohttp.ClientSession(loop=self._loop)
-        self.timeout = timeout
 
     def __del__(self):
         self._session.close()
@@ -60,7 +58,7 @@ class Account():
         # build the HTTP request and use basic authentication
         url = "https://%s/%s.xml" % (CHALLONGE_API_URL, uri)
 
-        with aiohttp.Timeout(self.timeout):
+        with aiohttp.Timeout(60):
             async with self._session.request(method, url, params=params, auth=aiohttp.BasicAuth(self._user, self._api_key)) as response:
                 resp = await response.text()
                 if response.status >= 400:
@@ -73,6 +71,26 @@ class Account():
         doc = ElementTree.fromstring(await self.fetch(method, uri, params_prefix, **params))
         return self._parse(doc)
 
+    def _parse_type(self, element):
+        """ Determines and element type """
+        element_type = element.get("type") or "string"
+
+        if element.get("nil"):
+            value = None
+        elif element_type == "boolean":
+            value = True if element.text.lower() == "true" else False
+        elif element_type == "dateTime":
+            value = iso8601.parse_date(element.text)
+        elif element_type == "decimal":
+            value = decimal.Decimal(element.text)
+        elif element_type == "integer":
+            value = int(element.text)
+        elif element_type == "array":
+            value = [self._parse(child) for child in element]
+        else:
+            value = element.text
+        return value
+
     def _parse(self, root):
         """Recursively convert an Element into python data types"""
         if root.tag == "nil-classes":
@@ -81,25 +99,11 @@ class Account():
             return [self._parse(child) for child in root]
 
         d = {}
+        if len(root) == 0:
+            value = self._parse_type(root)
+            return value
         for child in root:
-            element_type = child.get("type") or "string"
-
-            if child.get("nil"):
-                value = None
-            elif element_type == "boolean":
-                value = True if child.text.lower() == "true" else False
-            elif element_type == "dateTime":
-                value = iso8601.parse_date(child.text)
-            elif element_type == "decimal":
-                value = decimal.Decimal(child.text)
-            elif element_type == "integer":
-                value = int(child.text)
-            elif element_type == "array":
-                value = [self._parse(greatchild) for greatchild in child]
-            else:
-                value = child.text
-
-            d[child.tag] = value
+            d[child.tag] = self._parse_type(child)
         return d
 
     def _prepare_params(self, dirty_params, prefix=None):
