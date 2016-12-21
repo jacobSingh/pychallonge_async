@@ -1,4 +1,4 @@
-# pychallonge
+# pychallonge  [![Build Status](https://travis-ci.org/fp12/pychallonge_async.svg?branch=master)](https://travis-ci.org/fp12/pychallonge_async)
 
 Pychallonge provides python bindings for the
 [CHALLONGE!](http://challonge.com) [API](http://api.challonge.com/v1).
@@ -72,8 +72,8 @@ functions work, you can clean up errant tournaments as follows.
 
 ```python
    import challonge
-   challonge.set_credentials("my_user", "my_api_key")
-   for t in challonge.tournaments.index():
+   account = Account('your_challonge_username', 'your_api_key')
+   for t in account.tournaments.index():
        if t["name"].startswith("pychallonge"):
-           challonge.tournaments.destroy(t["id"])
+           await challonge.tournaments.destroy(t["id"])
 ```

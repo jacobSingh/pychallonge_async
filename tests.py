@@ -23,6 +23,7 @@ def async_test(f):
         loop.run_until_complete(future)
     return wrapper
 
+
 class AccountTestCase(unittest.TestCase):
 
     def test_init(self):
@@ -182,6 +183,7 @@ class TournamentsTestCase(unittest.TestCase):
 
         yield from self._account.participants.destroy(self.t["id"], p["id"])
 
+
 class ParticipantsTestCase(unittest.TestCase):
 
     @async_test
@@ -246,6 +248,7 @@ class ParticipantsTestCase(unittest.TestCase):
         # randomize has a 50% chance of actually being different than
         # current seeds, so we're just verifying that the method runs at all
         yield from self._account.participants.randomize(self.t["id"])
+
 
 class MatchesTestCase(unittest.TestCase):
 
